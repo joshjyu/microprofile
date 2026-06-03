@@ -2,3 +2,5 @@
 /.python-version
 /uv.lock
 /pyrightconfig.json
+/__pycache__/
+/routers/__pycache__/

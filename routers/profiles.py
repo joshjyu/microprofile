@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from bson import ObjectID
+from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException
 from passlib.context import CryptContext
@@ -59,7 +59,7 @@ async def update_app_data(
       A confirmation message.
     """
     try:
-        oid = ObjectID(user_id)
+        oid = ObjectId(user_id)
     except InvalidId:
         raise HTTPException(status_code=404, detail="User not found")
 
