@@ -72,3 +72,26 @@ async def update_app_data(
         raise HTTPException(status_code=404, detail="User not found")
 
     return {"message": "ok"}
+
+
+@router.delete("/{user_id}", status_code=200)
+async def delete_profile(user_id: str) -> dict[str, str]:
+    """
+    Delete a user profile by ID.
+
+    Parameters:
+      user_id: The unique ID of the profile to delete.
+    Returns:
+      A confirmation message.
+    """
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    result = await profiles.delete_one({"_id": oid})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"message": "ok"}
