@@ -6,8 +6,8 @@ from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException
 from passlib.context import CryptContext
 
-from database import profiles
-from models import ProfileCreateRequest, ProfileCreateResponse
+from app.database import profiles
+from app.models import ProfileCreateRequest, ProfileCreateResponse
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 # bcrypt algorithm for hashing
