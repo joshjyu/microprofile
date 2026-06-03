@@ -16,3 +16,11 @@ class ProfileCreateResponse(BaseModel):
     """
 
     id: str
+
+
+class PatchProfileRequest(BaseModel):
+    """
+    Request body for updating a user profile's username.
+    """
+
+    username: str

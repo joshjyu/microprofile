@@ -7,7 +7,11 @@ from fastapi import APIRouter, HTTPException
 import bcrypt
 
 from app.database import profiles
-from app.models import ProfileCreateRequest, ProfileCreateResponse
+from app.models import (
+    ProfileCreateRequest,
+    ProfileCreateResponse,
+    PatchProfileRequest,
+)
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 # bcrypt algorithm for hashing
@@ -66,6 +70,40 @@ async def update_app_data(
 
     result = await profiles.update_one(
         {"_id": oid}, {"$set": {f"client_data.{app_id}": body}}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"message": "ok"}
+
+
+@router.patch("/{user_id}", status_code=200)
+async def patch_profile(
+    user_id: str, body: PatchProfileRequest
+) -> dict[str, str]:
+    """
+    Update the username of an existing user profile.
+
+    Parameters:
+      user_id: The unique ID of the profile to update.
+      body: Request containing the new username.
+    Returns:
+      A confirmation message.
+    """
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if await profiles.find_one(
+        # $ne ensures current user is excluded from duplicate username check
+        {"username": body.username, "_id": {"$ne": oid}}
+    ):
+        raise HTTPException(status_code=409, detail="Username already taken")
+
+    result = await profiles.update_one(
+        {"_id": oid}, {"$set": {"username": body.username}}
     )
 
     if result.matched_count == 0:
