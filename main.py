@@ -1,6 +1,5 @@
-def main():
-    print("Hello from microprofile!")
+from fastapi import FastAPI
+from routers.profiles import router as profiles_router
 
-
-if __name__ == "__main__":
-    main()
+app = FastAPI()
+app.include_router(profiles_router)
