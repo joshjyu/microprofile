@@ -4,14 +4,13 @@ from typing import Any
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException
-from passlib.context import CryptContext
+import bcrypt
 
 from app.database import profiles
 from app.models import ProfileCreateRequest, ProfileCreateResponse
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 # bcrypt algorithm for hashing
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @router.post("", response_model=ProfileCreateResponse, status_code=201)
@@ -29,7 +28,9 @@ async def create_profile(
     if await profiles.find_one({"username": body.username}):
         raise HTTPException(status_code=409, detail="Username already taken")
 
-    password_hash = _pwd_context.hash(body.password)
+    password_hash = bcrypt.hashpw(
+        body.password.encode(), bcrypt.gensalt()
+    ).decode()
     result = await profiles.insert_one(
         {
             "username": body.username,
