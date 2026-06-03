@@ -140,6 +140,67 @@ async def test_patch_profile_returns_404_for_invalid_user(
     assert response.status_code == 404
 
 
+async def test_patch_profile_updates_password(client: AsyncClient) -> None:
+    """
+    Assert PATCH /profiles/{user_id} returns 200 on valid password update.
+
+    Parameters:
+      client: Async test client with mock database.
+    """
+    create = await client.post(
+        "/profiles",
+        json={"username": "passuser", "password": "oldpassword"},
+    )
+    user_id = create.json()["id"]
+    response = await client.patch(
+        f"/profiles/{user_id}",
+        json={"password": "newpassword"},
+    )
+    assert response.status_code == 200
+
+
+async def test_patch_profile_updates_both_fields(
+    client: AsyncClient,
+) -> None:
+    """
+    Assert PATCH /profiles/{user_id} returns 200 when updating both fields.
+
+    Parameters:
+      client: Async test client with mock database.
+    """
+    create = await client.post(
+        "/profiles",
+        json={"username": "bothuser", "password": "oldpassword"},
+    )
+    user_id = create.json()["id"]
+    response = await client.patch(
+        f"/profiles/{user_id}",
+        json={"username": "bothuser_new", "password": "newpassword"},
+    )
+    assert response.status_code == 200
+
+
+async def test_patch_profile_returns_400_for_empty_body(
+    client: AsyncClient,
+) -> None:
+    """
+    Assert PATCH /profiles/{user_id} returns 400 when no fields are provided.
+
+    Parameters:
+      client: Async test client with mock database.
+    """
+    create = await client.post(
+        "/profiles",
+        json={"username": "emptyuser", "password": "secret"},
+    )
+    user_id = create.json()["id"]
+    response = await client.patch(
+        f"/profiles/{user_id}",
+        json={},
+    )
+    assert response.status_code == 400
+
+
 async def test_delete_profile_removes_user(client: AsyncClient) -> None:
     """
     Assert DELETE /profiles/{user_id} returns 200 for an existing user.

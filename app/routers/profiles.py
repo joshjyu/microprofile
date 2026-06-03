@@ -83,11 +83,11 @@ async def patch_profile(
     user_id: str, body: PatchProfileRequest
 ) -> dict[str, str]:
     """
-    Update the username of an existing user profile.
+    Update the username or password of an existing user profile.
 
     Parameters:
       user_id: The unique ID of the profile to update.
-      body: Request containing the new username.
+      body: Request containing the new username and/or password.
     Returns:
       A confirmation message.
     """
@@ -96,15 +96,29 @@ async def patch_profile(
     except InvalidId:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if await profiles.find_one(
-        # $ne ensures current user is excluded from duplicate username check
-        {"username": body.username, "_id": {"$ne": oid}}
-    ):
-        raise HTTPException(status_code=409, detail="Username already taken")
+    updates: dict = {}
 
-    result = await profiles.update_one(
-        {"_id": oid}, {"$set": {"username": body.username}}
-    )
+    if body.username is not None:
+        if await profiles.find_one(
+            # $ne ensures current user is excluded from duplicate username check
+            {"username": body.username, "_id": {"$ne": oid}}
+        ):
+            raise HTTPException(
+                status_code=409, detail="Username already taken"
+            )
+        updates["username"] = body.username
+
+    if body.password is not None:
+        updates["password_hash"] = bcrypt.hashpw(
+            body.password.encode(), bcrypt.gensalt()
+        ).decode()
+
+    if not updates:
+        raise HTTPException(
+            status_code=400, detail="No fields provided to update"
+        )
+
+    result = await profiles.update_one({"_id": oid}, {"$set": updates})
 
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")

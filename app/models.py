@@ -23,4 +23,5 @@ class PatchProfileRequest(BaseModel):
     Request body for updating a user profile's username.
     """
 
-    username: str
+    username: str | None = None
+    password: str | None = None
