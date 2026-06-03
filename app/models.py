@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -25,3 +26,13 @@ class PatchProfileRequest(BaseModel):
 
     username: str | None = None
     password: str | None = None
+
+
+class ProfileResponse(BaseModel):
+    """
+    Response body for a user profile lookup.
+    """
+
+    id: str
+    username: str
+    created_at: datetime

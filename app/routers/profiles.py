@@ -11,6 +11,7 @@ from app.models import (
     ProfileCreateRequest,
     ProfileCreateResponse,
     PatchProfileRequest,
+    ProfileResponse,
 )
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
@@ -45,6 +46,59 @@ async def create_profile(
     )
 
     return ProfileCreateResponse(id=str(result.inserted_id))
+
+
+@router.get("/{user_id}", response_model=ProfileResponse, status_code=200)
+async def get_profile(user_id: str) -> ProfileResponse:
+    """
+    Retrieve a user profile by ID.
+
+    Parameters:
+      user_id: The unique ID of the target user profile.
+    Returns:
+      The user's profile data excluding password and app data.
+    """
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    doc = await profiles.find_one({"_id": oid})
+    if doc is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return ProfileResponse(
+        id=str(doc["_id"]),
+        username=doc["username"],
+        created_at=doc["created_at"],
+    )
+
+
+@router.get("/{user_id}/apps/{app_id}", status_code=200)
+async def get_app_data(user_id: str, app_id: str) -> dict[str, Any]:
+    """
+    Retrieve app-specific data for a user profile.
+
+    Parameters:
+      user_id: The unique ID of the target user profile.
+      app_id: The client application's identifier.
+    Returns:
+      The stored JSON data for the given app.
+    """
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    doc = await profiles.find_one({"_id": oid})
+    if doc is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    app_data = doc.get("client_data", {}).get(app_id)
+    if app_data is None:
+        raise HTTPException(status_code=404, detail="App data not found")
+
+    return app_data
 
 
 @router.put("/{user_id}/apps/{app_id}", status_code=200)
